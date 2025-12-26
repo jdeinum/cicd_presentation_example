@@ -1,0 +1,86 @@
+# Runs benchmarks to ensure performance requirements
+name: benchmark
+
+# only needs to read the code
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+# If new code is pushed to a PR branch, then cancel in progress workflows for that PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  http-benchmark:
+    runs-on: ubuntu-latest
+    name: HTTP endpoint benchmarks
+
+    steps:
+      # checkout our codebase
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      # caches dependencies and tools
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2.8.0
+
+      # install stable toolchain
+      - name: Install stable
+        uses: dtolnay/rust-toolchain@stable
+
+      # generate a lockfile if one does not exist
+      - name: cargo generate-lockfile
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
+
+      # install oha for HTTP benchmarking
+      - name: Install oha
+        uses: taiki-e/install-action@v2
+        with:
+          tool: oha
+
+      # install jq for JSON parsing
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      # benchmark HTTP endpoints
+      - name: Benchmark HTTP endpoints
+        run: |
+          # Start server in background
+          cargo run --release &
+          SERVER_PID=$!
+
+          # Wait for server to be ready
+          echo "Waiting for server to start..."
+          sleep 5
+
+          # Run oha and extract p99.9 latency
+          echo "Running benchmark..."
+          LATENCY=$(oha -m POST -q 10000 -c 1000 \
+            -A 'application/json' -d '{"number": 42}' \
+            'http://localhost:8000/even_checker' \
+            -H 'Content-Type: application/json' \
+            --no-tui --output-format json | jq '.latencyPercentiles["p99.9"]')
+
+          # Stop server
+          kill $SERVER_PID
+
+          echo "P99.9 latency: ${LATENCY}s"
+
+          # Check latency threshold (< 100ms for CI environment)
+          # Using a more lenient threshold for CI since it's not a dedicated machine
+          if (( $(echo "$LATENCY > 0.1" | bc -l) )); then
+            echo "❌ Latency too high: ${LATENCY}s (threshold: 100ms)"
+            exit 1
+          fi
+
+          echo "✅ Latency within acceptable range: ${LATENCY}s"

@@ -1,0 +1,66 @@
+# Runs our tests
+name: test
+
+# only needs to read the code
+permissions:
+  contents: read
+
+# we run the workflow when we push / open a PR against master
+# the reason we do both is that the PR workflow checks your current branch,
+# while the on push happens after the code is pushed to master. If you have the
+# "require up to date code toggle" enabled, you effectively have the same thing.
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches:
+      - master
+
+  # just for manual testing
+  workflow_dispatch:
+
+# If new code is pushed to a PR branch, then cancel in progress workflows for that PR
+# Saves us resources
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  required:
+    runs-on: ubuntu-latest
+    name: ubuntu / ${{ matrix.toolchain }}
+
+    # what toolchains will we be using
+    strategy:
+      matrix:
+        toolchain: [stable]
+
+    # the steps for our workflow
+    steps:
+      # checkout our codebase
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      # caches dependencies and tools
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2.8.0
+
+      # install the correct toolchain
+      - name: Install ${{ matrix.toolchain }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+
+      # install nextest
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+
+      # generate a lockfile if one does not exist
+      - name: cargo generate-lockfile
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
+
+      # test our code
+      - name: cargo nextest run
+        run: cargo nextest run

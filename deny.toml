@@ -1,0 +1,31 @@
+# cargo-deny configuration for cicd_presentation_example
+# See https://embarkstudios.github.io/cargo-deny/ for docs
+
+[advisories]
+version = 2
+yanked = "deny"
+ignore = []
+unmaintained = "warn"
+
+[bans]
+multiple-versions = "warn"
+wildcards = "allow"
+deny = []
+
+[licenses]
+version = 2
+# Allow common permissive licenses used in Rust ecosystem
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Unicode-DFS-2016",
+]
+confidence-threshold = 0.8
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

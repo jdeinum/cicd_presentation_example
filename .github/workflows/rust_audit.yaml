@@ -1,0 +1,44 @@
+# Scan our codebase for unmaintained crates, invalid licenses, and security vulnerabilities
+name: audit
+
+# only run when our dependencies change, or weekly on sunday
+on:
+  schedule:
+    - cron: "0 0 * * 0"
+  push:
+    paths:
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+  workflow_dispatch:
+
+jobs:
+  security_audit:
+    runs-on: ubuntu-latest
+    name: Security audit
+    steps:
+      # check out our codebase
+      - uses: actions/checkout@v5
+
+      # activate our cache
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2.8.0
+
+      # install cargo-deny
+      - uses: taiki-e/install-action@cargo-deny
+
+      # install cargo-audit
+      - uses: taiki-e/install-action@cargo-audit
+
+      # cargo-audit: Check for security vulnerabilities in RustSec database
+      - name: cargo-audit - Check for known vulnerabilities
+        run: cargo audit
+
+      # cargo-deny checks
+      - name: cargo-deny - Scan for security advisories
+        run: cargo deny check advisories
+
+      - name: cargo-deny - Check dependency sources
+        run: cargo deny check sources
+
+      - name: cargo-deny - Check licenses
+        run: cargo deny check licenses

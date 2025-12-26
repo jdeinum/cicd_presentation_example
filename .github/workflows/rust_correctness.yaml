@@ -1,0 +1,56 @@
+# Runs correctness checks to detect undefined behavior
+name: correctness
+
+# only needs to read the code
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+# If new code is pushed to a PR branch, then cancel in progress workflows for that PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  miri:
+    runs-on: ubuntu-latest
+    name: nightly / miri
+    steps:
+      # checkout the code
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      # caches dependencies and tools
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2.8.0
+
+      # install nightly with miri
+      - name: Install nightly
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri
+
+      # generate a lockfile if one does not exist
+      - name: cargo generate-lockfile
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
+
+      # setup miri
+      - name: cargo miri setup
+        run: cargo miri setup
+
+      # run miri on tests
+      - name: cargo miri test
+        run: cargo miri test
+        env:
+          # Miri has issues with tokio's runtime, so we'll skip tests that use async
+          # For a simple app like this, we can run miri on the core logic only
+          MIRIFLAGS: -Zmiri-disable-isolation
