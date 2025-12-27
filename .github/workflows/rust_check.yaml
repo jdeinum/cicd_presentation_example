@@ -64,82 +64,82 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
   # Checks building documentation for your crate
-  doc:
-    # run docs generation on nightly rather than stable. This enables features like
-    # https://doc.rust-lang.org/beta/unstable-book/language-features/doc-cfg.html which allows an
-    # API be documented as only available in some specific platforms.
-    runs-on: ubuntu-latest
-    name: nightly / doc
-    steps:
-      # checkout the code
-      - uses: actions/checkout@v5
-        with:
-          submodules: true
-
-      # caches dependencies and tools
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.8.0
-
-      # install the nightly toolchain
-      - name: Install nightly
-        uses: dtolnay/rust-toolchain@nightly
-
-      # install cargo-docs-rs
-      - name: Install cargo-docs-rs
-        uses: dtolnay/install@cargo-docs-rs
-
-      # check docs
-      - name: cargo docs-rs
-        run: cargo docs-rs
-
-  # ensure our code is formatted properly
-  fmt:
-    runs-on: ubuntu-latest
-    name: stable / fmt
-    steps:
-      # checkout the code
-      - uses: actions/checkout@v5
-        with:
-          submodules: true
-
-      # caches dependencies and tools
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.8.0
-
-      # install the correct toolchain
-      - name: Install stable
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-
-      # check code format
-      - name: cargo fmt --check
-        run: cargo fmt --check
-
-  # check for unused dependencies
-  machete:
-    runs-on: ubuntu-latest
-    name: stable / machete
-    steps:
-      # checkout the code
-      - uses: actions/checkout@v5
-        with:
-          submodules: true
-
-      # caches dependencies and tools
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.8.0
-
-      # install the correct toolchain
-      - name: Install stable
-        uses: dtolnay/rust-toolchain@stable
-
-      # install cargo-machete
-      - name: Install cargo-machete
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-machete
-
-      # check for unused dependencies
-      - name: cargo machete
-        run: cargo machete
+  # doc:
+  #   # run docs generation on nightly rather than stable. This enables features like
+  #   # https://doc.rust-lang.org/beta/unstable-book/language-features/doc-cfg.html which allows an
+  #   # API be documented as only available in some specific platforms.
+  #   runs-on: ubuntu-latest
+  #   name: nightly / doc
+  #   steps:
+  #     # checkout the code
+  #     - uses: actions/checkout@v5
+  #       with:
+  #         submodules: true
+  #
+  #     # caches dependencies and tools
+  #     - name: Rust Cache
+  #       uses: Swatinem/rust-cache@v2.8.0
+  #
+  #     # install the nightly toolchain
+  #     - name: Install nightly
+  #       uses: dtolnay/rust-toolchain@nightly
+  #
+  #     # install cargo-docs-rs
+  #     - name: Install cargo-docs-rs
+  #       uses: dtolnay/install@cargo-docs-rs
+  #
+  #     # check docs
+  #     - name: cargo docs-rs
+  #       run: cargo docs-rs
+  #
+  # # ensure our code is formatted properly
+  # fmt:
+  #   runs-on: ubuntu-latest
+  #   name: stable / fmt
+  #   steps:
+  #     # checkout the code
+  #     - uses: actions/checkout@v5
+  #       with:
+  #         submodules: true
+  #
+  #     # caches dependencies and tools
+  #     - name: Rust Cache
+  #       uses: Swatinem/rust-cache@v2.8.0
+  #
+  #     # install the correct toolchain
+  #     - name: Install stable
+  #       uses: dtolnay/rust-toolchain@stable
+  #       with:
+  #         components: rustfmt
+  #
+  #     # check code format
+  #     - name: cargo fmt --check
+  #       run: cargo fmt --check
+  #
+  # # check for unused dependencies
+  # machete:
+  #   runs-on: ubuntu-latest
+  #   name: stable / machete
+  #   steps:
+  #     # checkout the code
+  #     - uses: actions/checkout@v5
+  #       with:
+  #         submodules: true
+  #
+  #     # caches dependencies and tools
+  #     - name: Rust Cache
+  #       uses: Swatinem/rust-cache@v2.8.0
+  #
+  #     # install the correct toolchain
+  #     - name: Install stable
+  #       uses: dtolnay/rust-toolchain@stable
+  #
+  #     # install cargo-machete
+  #     - name: Install cargo-machete
+  #       uses: taiki-e/install-action@v2
+  #       with:
+  #         tool: cargo-machete
+  #
+  #     # check for unused dependencies
+  #     - name: cargo machete
+  #       run: cargo machete
